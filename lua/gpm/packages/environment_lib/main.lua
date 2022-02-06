@@ -10,7 +10,7 @@ environment = environment or {
 
 function environment.saveFunc( name, func, override )
 	assert( type( name ) == "string", "bad argument #1 (string expected)" )
-    assert( name != "Null", "You can't just go ahead and overwrite a 'Null' function." )
+    assert( name ~= "Null", "You can't just go ahead and overwrite a 'Null' function." )
     assert( type( func ) == "function", "bad argument #2 (function expected)" )
 
     if (environment["Functions"][name] == nil) or (override == true) then
