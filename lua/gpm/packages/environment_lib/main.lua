@@ -4,13 +4,13 @@ local type = type
 environment = environment or {
     ["Environments"] = {},
     ["Functions"] = {
-        ["Null"] = function()end
+        ["null"] = function()end
     }
 }
 
 function environment.saveFunc( name, func, override )
 	assert( type( name ) == "string", "bad argument #1 (string expected)" )
-    assert( name ~= "Null", "You can't just go ahead and overwrite a 'Null' function." )
+    assert( name ~= "null", "You can't just go ahead and overwrite a 'null' function." )
     assert( type( func ) == "function", "bad argument #2 (function expected)" )
 
     if (environment["Functions"][name] == nil) or (override == true) then
@@ -21,7 +21,7 @@ function environment.saveFunc( name, func, override )
 end
 
 function environment.loadFunc( name )
-    return environment["Functions"][name] or environment["Functions"]["Null"]
+    return environment["Functions"][name] or environment["Functions"]["null"]
 end
 
 function environment.new( name, builder, override )
