@@ -3,8 +3,8 @@ local type = type
 
 module( "environment", package.seeall )
 
-Environments = {}
-Functions = {
+local environments = {}
+local functions = {
     ["null"] = function() end
 }
 
@@ -17,21 +17,21 @@ function saveFunc( name, func, override )
     assert( name ~= "null", "You can't just go ahead and overwrite a 'null' function." )
     assert( type( func ) == "function", "bad argument #2 (function expected)" )
 
-    if (Functions[ name ] == nil) or (override == true) then
-        Functions[ name ] = func
+    if (functions[ name ] == nil) or (override == true) then
+        functions[ name ] = func
     end
 
-    return Functions[ name ]
+    return functions[ name ]
 end
 
 function loadFunc( name )
-    return Functions[ name ] or Functions["null"]
+    return functions[ name ] or functions["null"]
 end
 
 function removeFunc( name )
 	assert( type( name ) == "string", "bad argument #1 (string expected)" )
     assert( name ~= "null", "You can't just go ahead and remove a 'null' function." )
-    Functions[ name ] = nil
+    functions[ name ] = nil
 end
 
 --[[-------------------------------------------------------------------------
@@ -76,12 +76,14 @@ do
         local emptyTable = {}
 
         do
+
             local table_Count = table.Count
             local setmetatable = setmetatable
+
             function new( any, builder, override )
                 assert( type( any ) == "string", "bad argument #1 (string expected)" )
 
-                if (Environments[ any ] == nil) or (override == true) then
+                if (environments[ any ] == nil) or (override == true) then
                     local env = {}
                     if type( builder ) == "function" then
                         env = builder( any ) or env
@@ -90,23 +92,31 @@ do
                     if ( type( env ) == "table" ) then
                         env["__env"] = {
                             ["identifier"] = any,
-                            ["id"] = table_Count( Environments ) + 1
+                            ["id"] = table_Count( environments ) + 1
                         }
 
-                        Environments[ any ] = setmetatable( env, ENV )
+                        environments[ any ] = setmetatable( env, ENV )
                     end
                 end
 
-                return Environments[ any ] or emptyTable
+                return environments[ any ] or emptyTable
             end
+
         end
 
-        function load( any )
-            return Environments[ any ] or emptyTable
+        function get( any )
+            return environments[ any ] or emptyTable
         end
 
     end
 
+end
+
+do
+    local table_Copy = table.Copy
+    function getAll()
+        return table_Copy( environments )
+    end
 end
 
 function getName( env )
@@ -116,5 +126,5 @@ function getName( env )
 end
 
 function remove( any )
-    Environments[ any ] = nil
+    environments[ any ] = nil
 end
