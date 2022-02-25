@@ -9,7 +9,7 @@ local functions = {
 }
 
 --[[-------------------------------------------------------------------------
-    Functions Caching
+    Working on Functions
 ---------------------------------------------------------------------------]]
 
 function saveFunc( name, func, override )
@@ -35,7 +35,7 @@ function removeFunc( name )
 end
 
 --[[-------------------------------------------------------------------------
-    Environments
+    Working on Environments
 ---------------------------------------------------------------------------]]
 
 function global()
@@ -60,6 +60,11 @@ do
 
         function ENV:__tostring()
             return "GLua Environment - " .. self:getName() .. " [" .. self:getID() .. "]"
+        end
+
+        function ENV:replace( name, func )
+            assert( type( name ) == "string", "bad argument #1 (string expected)" )
+            self[ name ] = func or functions["null"]
         end
 
     end
@@ -87,6 +92,8 @@ do
                     local env = {}
                     if type( builder ) == "function" then
                         env = builder( any ) or env
+                    elseif type( builder ) == "table" then
+                        env = builder
                     end
 
                     if ( type( env ) == "table" ) then
@@ -108,8 +115,20 @@ do
             return environments[ any ] or emptyTable
         end
 
+        function remove( any )
+            environments[ any ] = nil
+        end
+
     end
 
+end
+
+function getName( env )
+    if isEnvironment( env ) then
+        return env:getName()
+    end
+
+    return "GLua Environment"
 end
 
 do
@@ -119,12 +138,43 @@ do
     end
 end
 
-function getName( env )
-    if isEnvironment( env ) then
-        return env:getName()
+do
+    local runExtensions = {
+        ["lua"] = true,
+        ["dat"] = true,
+        ["txt"] = true
+    }
+
+    function isIncludeExtension( ext )
+        return runExtensions[ ext ] or false
     end
 end
 
-function remove( any )
-    environments[ any ] = nil
+do
+
+    local CompileFile = CompileFile
+    local file_Exists = file.Exists
+    local debug_setfenv = debug.setfenv
+
+    function include( path, environment, gamePath )
+        if file_Exists( path, gamePath or "GAME" ) and isIncludeExtension( path:GetExtensionFromFilename() ) then
+            local func = nil
+
+            local luaCode = file.Read( path, gamePath or "GAME" )
+            if (luaCode == nil) or (luaCode == "") then
+                func = CompileFile( path )
+            else
+                func = CompileString( luaCode, getName( environment ) .. ": " .. path )
+            end
+
+            assert( type( func ) == "function", "Lua code compilation failed! <nil>" )
+
+            if isEnvironment( environment ) then
+                debug_setfenv( func, environment )
+            end
+
+            local ok, data = pcall( func )
+            return (ok == true) and data
+        end
+    end
 end
